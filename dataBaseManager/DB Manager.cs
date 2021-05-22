@@ -151,7 +151,14 @@ namespace dataBaseManager
                 DataGridView tempGrid = new DataGridView();
                 tempGrid.Dock = DockStyle.Fill;
                 tempGrid.ReadOnly = true;
-                tempGrid.DataSource = _connection.getQuery(query).Tables[0];
+                try
+                {
+                    tempGrid.DataSource = _connection.getQuery(query).Tables[0];
+                }
+                catch
+                {
+                    MessageBox.Show("Error while loading data.");
+                }
                 viewer.Size = new Size(800, 600);
                 viewer.Controls.Add(tempGrid);
                 viewer.Show();
@@ -184,13 +191,22 @@ namespace dataBaseManager
                 tempTabPage.Controls.Add(tempDataGridView);
                 tables.Controls.Add(tempTabPage);
             }
-            if (!(tabIndex < 0)) tables.SelectTab(tabIndex);
+            try
+            {
+                if (!(tabIndex < 0)) tables.SelectTab(tabIndex);
+            }
+            catch
+            {
+                tables.SelectTab(0);
+            }
             if (tables.Controls.Count == 0)
             {
                 table.Enabled = false;
                 renameTable.Enabled = false;
                 removeTable.Enabled = false;
                 records.Enabled = false;
+                executeQuery.Enabled = false;
+                joinTables.Enabled = false;
             }
             else
             {
@@ -198,6 +214,8 @@ namespace dataBaseManager
                 renameTable.Enabled = true;
                 removeTable.Enabled = true;
                 records.Enabled = true;
+                executeQuery.Enabled = true;
+                joinTables.Enabled = true;
             }
             this.ResumeLayout();
         }

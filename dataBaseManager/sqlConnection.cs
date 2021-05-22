@@ -64,8 +64,18 @@ namespace dataBaseManager
             _cnn.Open();
             SqlDataAdapter dataAdapter = new SqlDataAdapter(query, _cnn);
             DataSet dataset = new DataSet();
-            dataAdapter.Fill(dataset);
-            _cnn.Close();
+            try
+            {
+                dataAdapter.Fill(dataset);
+            }
+            catch (Exception err)
+            {
+                MessageBox.Show(err.Message);
+            }
+            finally
+            {
+                _cnn.Close();
+            }
             return dataset;
         }
         public void sqlExecute(string command)
@@ -79,7 +89,7 @@ namespace dataBaseManager
             }
             catch (SqlException err)
             {
-                MessageBox.Show("Error: " + err.Message + "\n in: " + command);
+                MessageBox.Show("Error: " + err.Message + "\n\nSQL command: " + command);
             }
             finally
             {
@@ -120,8 +130,20 @@ namespace dataBaseManager
             _cnn.Open();
             SqlDataAdapter dataAdapter = new SqlDataAdapter("SELECT "+columnName+" FROM "+ tableName +";", _cnn);
             DataSet dataset = new DataSet();
-            dataAdapter.Fill(dataset);
-            _cnn.Close();
+            try
+            {
+                dataAdapter.Fill(dataset);
+            }
+            catch(SqlException err)
+            {
+                MessageBox.Show(err.Message);
+                return new List<string>();
+            }
+            finally
+            {
+                _cnn.Close();
+            }
+            
             foreach (DataRow temp in dataset.Tables[0].Rows)
             {
                 values.Add(temp[0].ToString());

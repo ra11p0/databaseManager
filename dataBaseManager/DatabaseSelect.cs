@@ -129,6 +129,7 @@ namespace dataBaseManager
 
         private void openDbManager(object sender, EventArgs e)
         {
+            if (databases.SelectedItem == null) return;
             submit.Text = "Connecting...";
             submit.Enabled = false;
             this.Refresh();

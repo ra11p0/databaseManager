@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
+using System.Linq;
 
 namespace dataBaseManager
 {
@@ -21,7 +22,7 @@ namespace dataBaseManager
             Label textLabel = new Label() { Left = 50, Top = 20, Text = text, Width = 300};
             TextBox textBox = new TextBox() { Left = 50, Top = 50, Width = 400 };
             Button confirmation = new Button() { Text = "Ok", Left = 350, Width = 100, Top = 90, DialogResult = DialogResult.OK };
-            confirmation.Click += (sender, e) => { prompt.Close(); };
+            confirmation.Click += (sender, e) => { textBox.Text = textBox.Text.Trim();  prompt.Close(); };
             prompt.Controls.Add(textBox);
             prompt.Controls.Add(confirmation);
             prompt.Controls.Add(textLabel);
@@ -51,7 +52,7 @@ namespace dataBaseManager
             type.Items.Add("DATE");
 
             type.TextChanged += (object sender, EventArgs args) => {
-                if (type.SelectedItem != null && type.SelectedItem.ToString() == "DATE")
+                if (type.SelectedItem != null && (type.SelectedItem.ToString() == "DATE" || type.SelectedItem.ToString() == "TEXT"))
                 {
                     length.Text = "";
                     length.Enabled = false;
@@ -91,6 +92,16 @@ namespace dataBaseManager
             prompt.Controls.Add(layout);
             Button confirmation = new Button() { Text = "Ok", Left = 350, Width = 100, Top = 90, DialogResult = DialogResult.OK };
             confirmation.Click += (sender, e) => {
+                if (type.Text == "VARCHAR" && length.Text == "")
+                {
+                    MessageBox.Show("Empty size field!");
+                    return;
+                }
+                else if (!length.Text.All(c => char.IsDigit(c)))
+                {
+                    MessageBox.Show("Size field should contain only digits!");
+                    return;
+                }
                 result = length.Text == "" ? string.Format("{0} {1} {2};", name.Text, type.Text, constraint.Text) : string.Format("{0} {1}({2}) {3};", name.Text, type.Text, length.Text, constraint.Text);
                 prompt.Close(); 
             };
@@ -321,7 +332,7 @@ namespace dataBaseManager
             prompt.Controls.Add(layout);
             Button confirmation = new Button() { Text = "Ok", Left = 350, Width = 100, Top = 90, DialogResult = DialogResult.OK };
             confirmation.Click += (sender, e) => {
-                result = string.Format("DELETE FROM {0} WHERE {1}='{2}';", currentTable, columns.Text, values.Text);
+                result = string.Format("DELETE FROM {0} WHERE {1} LIKE '{2}';", currentTable, columns.Text, values.Text);
                 prompt.Close();
             };
             prompt.Controls.Add(confirmation);
@@ -443,11 +454,19 @@ namespace dataBaseManager
                 }
             };
             condition.TextChanged += (sender, args) => {
-                string fixedColumnName = condition.Text.Substring(condition.Text.IndexOf('.')+1, condition.Text.Length - condition.Text.IndexOf('.')-1);
-                string fixedTableName = condition.Text.Substring(0, condition.Text.IndexOf('.'));
-                value.Items.Clear();
-                value.Items.AddRange(_cnn.getRows(fixedTableName, fixedColumnName).ToArray());
-
+                string fixedColumnName;
+                string fixedTableName;
+                try
+                {
+                    fixedColumnName = condition.Text.Substring(condition.Text.IndexOf('.') + 1, condition.Text.Length - condition.Text.IndexOf('.') - 1);
+                    fixedTableName = condition.Text.Substring(0, condition.Text.IndexOf('.'));
+                    value.Items.Clear();
+                    value.Items.AddRange(_cnn.getRows(fixedTableName, fixedColumnName).ToArray());
+                }
+                catch
+                {
+                    MessageBox.Show("Invalid value in condition column name field.");
+                }
             };
 
 
@@ -486,7 +505,7 @@ namespace dataBaseManager
                     result = result == "" ? item.Trim() + " AS '" + item.Trim() + "'" : result + ", " + item.Trim() + " AS '" + item.Trim() + "'";
                 }
                 result = "select " + result + string.Format(" from {0} full outer join {1} on {0}.{2}={1}.{3}", table1.Text.Trim(), table2.Text.Trim(), join1.Text.Trim(), join2.Text.Trim());
-                if (value.Text != "") result = result + " where " + condition.Text.Trim() + "='" + value.Text.Trim() + "';";
+                if (value.Text != "") result = result + " where " + condition.Text.Trim() + " like '" + value.Text.Trim() + "';";
                 else result = result + ";";
                 prompt.Close();
             };
